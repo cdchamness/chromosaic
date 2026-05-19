@@ -1,0 +1,6 @@
+# Alfil
+# Leaps exactly two spaces diagonally
+2,2
+-2,2
+-2,-2
+2,-2

@@ -1,0 +1,6 @@
+# Dabbaba
+# Leaps exactly two spaces orthogonally
+2,0
+0,2
+-2,0
+0,-2

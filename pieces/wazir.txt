@@ -1,0 +1,6 @@
+# Wazir piece
+# Can only go 1 space orthogonally
+1,0
+0,1
+-1,0
+0,-1
