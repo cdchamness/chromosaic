@@ -3,8 +3,9 @@ use std::{fs, path::PathBuf};
 use crate::grid::Coord;
 use anyhow::{Error, Result};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Piece {
-    name: String,
+    pub name: String,
     moves: Vec<Coord>,
 }
 
@@ -60,6 +61,21 @@ impl Piece {
         };
 
         Ok(piece)
+    }
+
+    pub fn get_all_piece_types() -> Result<Vec<String>> {
+        let mut pieces = Vec::new();
+        for entry in fs::read_dir("pieces")? {
+            let path = entry?.path();
+            if path.extension().and_then(|extension| extension.to_str()) != Some("txt") {
+                continue;
+            }
+            if let Some(piece_name) = path.file_stem().and_then(|stem| stem.to_str()) {
+                pieces.push(piece_name.to_string());
+            }
+        }
+        pieces.sort();
+        Ok(pieces)
     }
 
     pub fn moves(&self) -> &[Coord] {

@@ -1,7 +1,8 @@
 use crate::{
-    game::{Color, Game},
+    game::{Color, Game, Player},
     grid::{Coord, Spiral},
     piece::Piece,
+    render::{BoardBounds, ImageRenderOptions, image_dimensions},
 };
 
 #[test]
@@ -32,10 +33,10 @@ fn colors_red_black_knights() -> anyhow::Result<()> {
     let knight_piece = Piece::from_name("knight")?;
     let knight_piece2 = Piece::from_name("knight")?;
 
-    let black = Color::black();
-    let red = Color::red();
+    let p1 = Player::new(knight_piece, Color::black());
+    let p2 = Player::new(knight_piece2, Color::red());
 
-    let mut game = Game::new(100, vec![black, red], vec![knight_piece, knight_piece2]);
+    let mut game = Game::new(100, vec![p1, p2]);
     game.play();
 
     // These are listed on the ON-LINE ENCYCLOPEDIA OF INTEGER SEQUENCES
@@ -66,4 +67,54 @@ fn colors_red_black_knights() -> anyhow::Result<()> {
     assert_eq!(red_actual, expected_red);
 
     Ok(())
+}
+
+#[test]
+fn bundled_piece_files_parse() -> anyhow::Result<()> {
+    for name in [
+        "alfil", "camel", "dabbaba", "ferz", "giraffe", "king", "knight", "wazir", "zebra",
+    ] {
+        Piece::from_name(name)?;
+    }
+
+    Ok(())
+}
+
+#[test]
+fn bundled_piece_types_are_found() -> anyhow::Result<()> {
+    let types = Piece::get_all_piece_types()?;
+
+    assert_eq!(
+        types,
+        [
+            "alfil", "camel", "dabbaba", "ferz", "giraffe", "king", "knight", "wazir", "zebra",
+        ]
+    );
+
+    Ok(())
+}
+
+#[test]
+fn board_bounds_cover_spiral_points() {
+    let spiral = Spiral::new(10);
+    let bounds = BoardBounds::from_points(spiral.points()).expect("spiral should not be empty");
+
+    assert_eq!(bounds.min_x, -1);
+    assert_eq!(bounds.max_x, 2);
+    assert_eq!(bounds.min_y, -1);
+    assert_eq!(bounds.max_y, 1);
+    assert_eq!(bounds.width_cells(), 4);
+    assert_eq!(bounds.height_cells(), 3);
+}
+
+#[test]
+fn image_dimensions_include_padding() {
+    let spiral = Spiral::new(10);
+    let bounds = BoardBounds::from_points(spiral.points()).expect("spiral should not be empty");
+    let options = ImageRenderOptions {
+        cell_px: 8,
+        padding_cells: 1,
+    };
+
+    assert_eq!(image_dimensions(bounds, options), (48, 40));
 }
