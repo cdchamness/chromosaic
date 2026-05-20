@@ -1,0 +1,10 @@
+# Definitions of pieces to be used in the game
+Wazir: 1,0
+King: 1,0;1,1
+Ferz: 1,1
+Alfil: 2,2
+Dabbaba: 2,0
+Knight: 2,1
+Camel: 3,1
+Zebra: 3,2
+Giraffe: 4,1

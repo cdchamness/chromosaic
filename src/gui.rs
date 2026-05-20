@@ -9,11 +9,12 @@ use eframe::{
 use crate::{
     config::AppConfig,
     game::{Color, Game, Player},
+    grid::Coord,
     piece::Piece,
     render::{BoardBounds, ImageRenderOptions, write_png},
 };
 
-const MIN_ZOOM: f32 = 1.0;
+const MIN_ZOOM: f32 = 2.0;
 const MAX_ZOOM: f32 = 96.0;
 
 pub fn run() -> Result<()> {
@@ -39,7 +40,7 @@ fn native_options() -> eframe::NativeOptions {
 }
 
 struct ChromosaicApp {
-    piece_types: Vec<String>,
+    piece_types: Vec<Piece>,
     rows: Vec<Player>,
     board_size: usize,
     zoom: f32,
@@ -53,19 +54,20 @@ struct ChromosaicApp {
 impl ChromosaicApp {
     fn new() -> ChromosaicApp {
         let board_size = 100_000;
+        let piece_types = match Piece::build_piece_list() {
+            Ok(piece_list) => piece_list,
+            Err(_e) => vec![Piece::new("Knight", &[Coord::new(1, 2)])]
+        };
         let rows = vec![
             Player {
-                piece: Piece::from_name("knight").unwrap(),
+                piece: Piece::from_name("Knight", &piece_types),
                 color: Color::black(),
             },
             Player {
-                piece: Piece::from_name("knight").unwrap(),
+                piece: Piece::from_name("Knight", &piece_types),
                 color: Color::red(),
             },
         ];
-        let piece_types =
-            Piece::get_all_piece_types().unwrap_or_else(|_| vec!["knight".to_string()]);
-
         let game = Game::new(board_size, rows.clone());
 
         ChromosaicApp {
@@ -168,24 +170,15 @@ impl ChromosaicApp {
                 ComboBox::from_id_salt(format!("piece-{index}"))
                     .selected_text(display_piece_name(&self.rows[index].piece.name))
                     .show_ui(ui, |ui| {
-                        let piece_types = self.piece_types.clone();
-                        for piece_name in piece_types {
-                            let selected = self.rows[index].piece.name == piece_name;
+                        for piece in &self.piece_types {
+                            let selected = self.rows[index].piece.name == piece.name;
                             if ui
-                                .selectable_label(selected, display_piece_name(&piece_name))
+                                .selectable_label(selected, display_piece_name(&piece.name))
                                 .clicked()
                             {
-                                match Piece::from_name(&piece_name) {
-                                    Ok(piece) => {
-                                        self.rows[index].piece = piece;
-                                        self.do_refresh = true;
-                                        self.status = None;
-                                    }
-                                    Err(error) => {
-                                        self.status =
-                                            Some(format!("Could not load {piece_name}: {error}"));
-                                    }
-                                }
+                                self.rows[index].piece = Piece::from_name(&piece.name, &self.piece_types);
+                                self.do_refresh = true;
+                                self.status = None;
                             }
                         }
                     });
@@ -216,10 +209,9 @@ impl ChromosaicApp {
         }
 
         if ui.button("Add color/piece").clicked() {
-            let piece_name = self.piece_types.first().cloned().unwrap_or_default();
             self.rows.push(Player {
                 color: Color::from_rgb(0, 0, 255),
-                piece: Piece::from_name(&piece_name).unwrap(),
+                piece: Piece::from_name("Knight", &self.piece_types),
             });
             self.do_refresh = true;
         }

@@ -1,6 +1,0 @@
-# Ferz
-# Moves one space diagonally
-1,1
--1,1
--1,-1
-1,-1

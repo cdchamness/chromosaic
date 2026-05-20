@@ -2,7 +2,7 @@ use crate::{
     game::{Color, Game, Player},
     grid::{Coord, Spiral},
     piece::Piece,
-    render::{BoardBounds, ImageRenderOptions, image_dimensions},
+    render::{image_dimensions, BoardBounds, ImageRenderOptions},
 };
 
 #[test]
@@ -30,8 +30,9 @@ fn builds_spiral_points() {
 
 #[test]
 fn colors_red_black_knights() -> anyhow::Result<()> {
-    let knight_piece = Piece::from_name("knight")?;
-    let knight_piece2 = Piece::from_name("knight")?;
+    let piece_list = Piece::build_piece_list()?;
+    let knight_piece = Piece::from_name("Knight", &piece_list);
+    let knight_piece2 = Piece::from_name("Knight", &piece_list);
 
     let p1 = Player::new(knight_piece, Color::black());
     let p2 = Player::new(knight_piece2, Color::red());
@@ -71,10 +72,11 @@ fn colors_red_black_knights() -> anyhow::Result<()> {
 
 #[test]
 fn bundled_piece_files_parse() -> anyhow::Result<()> {
+    let piece_list = Piece::build_piece_list()?;
     for name in [
-        "alfil", "camel", "dabbaba", "ferz", "giraffe", "king", "knight", "wazir", "zebra",
+        "Alfil", "Camel", "Dabbaba", "Ferz", "Giraffe", "King", "Knight", "Wazir", "Zebra",
     ] {
-        Piece::from_name(name)?;
+        Piece::from_name(name, &piece_list);
     }
 
     Ok(())
@@ -86,9 +88,7 @@ fn bundled_piece_types_are_found() -> anyhow::Result<()> {
 
     assert_eq!(
         types,
-        [
-            "alfil", "camel", "dabbaba", "ferz", "giraffe", "king", "knight", "wazir", "zebra",
-        ]
+        ["Alfil", "Camel", "Dabbaba", "Ferz", "Giraffe", "King", "Knight", "Wazir", "Zebra",]
     );
 
     Ok(())

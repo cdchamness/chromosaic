@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::{collections::HashSet, fs, path::PathBuf};
 
 use crate::grid::Coord;
 use anyhow::{Error, Result};
@@ -10,70 +10,81 @@ pub struct Piece {
 }
 
 impl Piece {
-    pub fn from_name(name: &str) -> Result<Piece> {
-        let mut path = PathBuf::from("pieces");
-        path.push(format!("{name}.txt"));
+    pub fn new(name: &str, base_moves: &[Coord]) -> Piece {
+        let mut piece = Piece {
+            name: name.to_string(),
+            moves: vec![],
+        };
+        for base_move in base_moves {
+            piece.build_moves(base_move);
+        }
+        piece
+    }
 
+    pub fn build_piece_list() -> Result<Vec<Piece>> {
+        let path = PathBuf::from("piecelist.txt");
         let content = fs::read_to_string(&path)?;
 
-        let mut moves = Vec::new();
-        for (line_index, line) in content.lines().enumerate() {
-            let line = line.split_once('#').map_or(line, |(moves, _)| moves).trim();
+        let mut pieces = Vec::new();
+        for line in content.lines() {
+            let line = line
+                .split_once('#')
+                .map_or(line, |(before, _after)| before)
+                .trim();
             if line.is_empty() {
                 continue;
             }
+            match line.split_once(':') {
+                Some((name, base_moves_str)) => {
+                    let mut base_moves = Vec::new();
 
-            let (dx, dy) = line.trim().split_once(',').ok_or_else(|| {
-                Error::msg(format!(
-                    "{name}.txt: line {} is invalid. Must look like dx,dy",
-                    line_index + 1
-                ))
-            })?;
-            let dx = dx.trim().parse::<i32>().map_err(|_| {
-                Error::msg(format!(
-                    "{name}.txt: line {} has an invalid 'dx'",
-                    line_index + 1
-                ))
-            })?;
-            let dy = dy.trim().parse::<i32>().map_err(|_| {
-                Error::msg(format!(
-                    "{name}.txt: line {} has an invalid 'dy'",
-                    line_index + 1
-                ))
-            })?;
-            if dx == 0 && dy == 0 {
-                return Err(Error::msg(format!(
-                    "{name}.txt: line {} cannout use the offset 0,0",
-                    line_index + 1
-                )));
+                    for move_str in base_moves_str.split(';') {
+                        if let Some((x_str, y_str)) = move_str.split_once(',') {
+                            let x = x_str.trim().parse::<i32>()?;
+                            let y = y_str.trim().parse::<i32>()?;
+                            let base_move = Coord::new(x, y);
+                            base_moves.push(base_move);
+                        }
+                    }
+                    let new_piece = Piece::new(name, &base_moves);
+                    pieces.push(new_piece);
+                }
+                None => continue,
             }
-
-            moves.push(Coord::new(dx, dy))
         }
-        if moves.is_empty() {
-            return Err(Error::msg(format!(
-                "{name}.txt does not contain any legal moves!"
-            )));
-        }
-        let piece = Piece {
-            name: name.to_string(),
-            moves,
-        };
+        Ok(pieces)
+    }
 
-        Ok(piece)
+    pub fn from_name(name: &str, piece_list: &[Piece]) -> Piece {
+        for piece in piece_list {
+            if name == piece.name {
+                return piece.clone();
+            }
+        }
+        eprintln!("Could not find {} in piece_list", name);
+        Piece::new("Knight", &[Coord::new(1, 2)])
+    }
+
+    fn build_moves(&mut self, base_move: &Coord) {
+        let x = base_move.x;
+        let y = base_move.y;
+        let mut move_set = HashSet::new();
+        move_set.insert(Coord::new(x, y));
+        move_set.insert(Coord::new(x, -y));
+        move_set.insert(Coord::new(-x, y));
+        move_set.insert(Coord::new(-x, -y));
+        move_set.insert(Coord::new(y, x));
+        move_set.insert(Coord::new(y, -x));
+        move_set.insert(Coord::new(-y, x));
+        move_set.insert(Coord::new(-y, -x));
+
+        let mut move_vec: Vec<Coord> = move_set.iter().cloned().collect();
+        self.moves.append(&mut move_vec);
     }
 
     pub fn get_all_piece_types() -> Result<Vec<String>> {
-        let mut pieces = Vec::new();
-        for entry in fs::read_dir("pieces")? {
-            let path = entry?.path();
-            if path.extension().and_then(|extension| extension.to_str()) != Some("txt") {
-                continue;
-            }
-            if let Some(piece_name) = path.file_stem().and_then(|stem| stem.to_str()) {
-                pieces.push(piece_name.to_string());
-            }
-        }
+        let piece_list = Piece::build_piece_list()?;
+        let mut pieces: Vec<String> = piece_list.iter().map(|p| p.name.clone()).collect();
         pieces.sort();
         Ok(pieces)
     }
