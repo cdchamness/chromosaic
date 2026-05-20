@@ -2,24 +2,7 @@
 
 Chromosaic is a Rust explorer for spiral chess-piece colorings inspired by the Numberphile YouTube videos: [Red & Black Knights](https://www.youtube.com/watch?v=UiX4CFliegM) and the [Amazing Chessboard Patterns](https://www.youtube.com/watch?v=VgmDuBCayPw)
 
-It places numbered cells on a square spiral, then lets multiple "players" take turns claiming the earliest legal cell for their color. A player's piece defines which offsets that color attacks, so changing the piece, color, or player order can produce dramatically different mosaics.
-
-![Two knight coloring with 30,000 cells](images/knight_knight_30000.png)
-
-## What It Does
-
-- Lets the user choose pieces, colors, and turn order.
-- Supports many different leapers pieces, with ability to expand piece options.
-- Shows an interactive native GUI preview with pan and zoom.
-- Exports PNG images to `images/<piece_names>_<board_size>.png`.
-
-## Gallery
-
-### Zebra, Knight, King: 30,000 Cells
-
-![Zebra, Knight, King: 30,000 Cells](images/zebra_knight_king_300000.png)
-
-Check out the `images` folder to see some other cool patterns or use this to generate your own patterns.
+It places numbered cells on a square spiral, then lets multiple "players" take turns claiming the earliest legal cell for their color. A player's piece defines which offsets that color attacks, so changing the piece, color, or player order produces dramatically different colorings.
 
 ## Mathematical Context
 
@@ -30,7 +13,29 @@ The default two-knight experiment is connected to sequences in the [On-Line Ency
 - [OEIS A392178](https://oeis.org/A392178): cells claimed by the second knight
   color in the same process.
 
+![Two knight coloring with 30,000 cells](images/knight_knight_30000.png)
+
 Chromosaic generalizes that idea by allowing different piece types and number, custom colors, and arbitrary ordering.
+
+## What It Does
+
+- Lets the user choose pieces, colors, and turn order.
+- Supports many different leapers pieces, with ability to expand piece options.
+- Shows an interactive native GUI preview with pan and zoom.
+- Exports PNG images to `images/<piece_names>_<board_size>.png`.
+
+## Gallery
+
+### Zebra, Knight, King: 300,000 Cells
+
+![Zebra, Knight, King: 300,000 Cells](images/zebra_knight_king_300000.png)
+
+### Zebra, Camel, Giraffe: 300,000 Cells
+
+![Zebra, Camel, Giraffe: 300,000 Cells](images/Zebra_Camel_Giraffe_300000.png)
+
+Check out the `images` folder to see some other cool patterns or use this to generate your own patterns.
+
 
 ## How The Coloring Works
 
@@ -62,20 +67,23 @@ images/zebra_knight_king_1000000.png
 
 Exports are generated from the board data, not from the screen pixels, so zoom and pan do not affect the saved PNG.
 
-## Piece Files
+## Piece File
 
-Pieces are defined as plain text files in `pieces/`. Each non-empty, non-comment line is a move offset:
+Pieces are defined in `piecelist.txt`. Comments begin with `#`, and everything after `#` is ignored for that line. Each non-empty line defines one piece type using the format:
 
 ```text
-2,1
-2,-1
-1,2
-1,-2
+<piece name>: <dx1>,<dy1>;<dx2>,<dy2>; ...
 ```
 
-Comments begin with `#`.
+Each `dx,dy` pair is a base move offset. Chromosaic automatically expands each base move into all rotations and reflections, so a only a single base move is required to define the classic Chess Knight:
 
-To add a piece, create a new `pieces/<name>.txt` file and restart the app. The piece will appear in the GUI dropdown.
+```text
+King: 1,0;1,1 # Classic Chess King
+Knight: 1,2 # Classic Chess Knight
+Zebra: 3,2 # A 3-2 Jumper Piece
+```
+
+To add a piece, append a new line to `piecelist.txt` using the same format, then restart the application to load the new piece list.
 
 ## AI USAGE
 GUI, visualization, and PNG export code was primarly written by AI with personal review.
